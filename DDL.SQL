@@ -1,3 +1,4 @@
+-- Active: 1711436157956@@127.0.0.1@3306@estate
 # Entity
 # - 사용자
 # - 이메일 인증번호
@@ -29,11 +30,54 @@
 
 # - 게시물 (접수번호, 상태, 제목, 작성자, 작성일, 조회수, 내용, 답변)
 # table name : board
-# receotion_number : INT PK AI
+# reception_number : INT PK AI
 # status : BOOLEAN NN DEFAULT(false)
 # title : VARCHAR(100) NN
 # contents : TEXT NN 
 # writer_id : VARCHAR(50) NN FK user(user_id)
 # write_datetime : DATETIME NN DEFAULT(now())
 # view_count : INT NN DEFAULT(0)
-# coment : TEXT
+# comment : TEXT
+
+
+
+## 데이터베이스 생성
+CREATE DATABASE estate;
+USE estate;
+
+# 가장 낮은거 부터 만들어야 함
+
+## 이메일 인증 번호 테이블 생성
+CREATE TABLE email_auth_number (
+    email VARCHAR(100) PRIMARY KEY,
+    auth_number VARCHAR(4) NOT NULL
+);
+
+## 유저 테이블 생성
+CREATE TABLE user (
+    user_id VARCHAR(50) PRIMARY KEY,
+    user_password VARCHAR(255) NOT NULL,
+    user_email VARCHAR(100) NOT NULL UNIQUE,
+    user_role VARCHAR(15) NOT NULL 
+        DEFAULT('ROLE_USER') 
+        CHECK(user_role IN('ROLE_USER', 'ROLE_ADMIN')),
+    join_path VARCHAR(5) NOT NULL
+        DEFAULT('HOME')
+        CHECK(join_path IN('HOME', 'KAKAO', 'NAVER')),
+    CONSTRAINT user_email_fk
+        FOREIGN KEY (user_email) REFERENCES email_auth_number(email)
+);
+
+## Q&A 게시물 테이블 생성
+CREATE TABLE board (
+    reception_number INT PRIMARY KEY AUTO_INCREMENT,
+    status BOOLEAN NOT NULL DEFAULT(false),
+    title VARCHAR(100) NOT NULL,
+    contents TEXT NOT NULL,
+    writer_id VARCHAR(50) NOT NULL,
+    write_datetime DATETIME NOT NULL DEFAULT(now()),
+    view_count INT NOT NULL DEFAULT(0),
+    comment TEXT,
+    CONSTRAINT writer_id_fk
+        FOREIGN KEY (writer_id) REFERENCES user(user_id)
+);

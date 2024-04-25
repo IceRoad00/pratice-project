@@ -9,4 +9,5 @@ import com.estate.back.entitiy.EmailAuthNumberEntity;
 @Repository
 public interface EmailAuthNumberRepository extends JpaRepository<EmailAuthNumberEntity, String>{
     
+    boolean existsByEmailAndAuthNumber(String userEmail, String authNumber);
 }

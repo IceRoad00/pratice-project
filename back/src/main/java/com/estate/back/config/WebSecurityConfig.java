@@ -50,7 +50,8 @@ public class WebSecurityConfig {
     }
 
     // Cors 정책 설정
-    @Bean CorsConfigurationSource corsconfigurationSource() {
+    @Bean 
+    protected CorsConfigurationSource corsconfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.addAllowedOrigin("*");
         configuration.addAllowedHeader("*");

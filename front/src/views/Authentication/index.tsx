@@ -1,12 +1,35 @@
-import React, { ChangeEvent, useState } from "react";
+import React, { ChangeEvent, useEffect, useState } from "react";
 import "./style.css";
 
 import SignInBackground from "src/assents/image/sign-in-background.png";
 import SignUpBackground from "src/assents/image/sign-up-background.png";
 import InputBox from "src/components/Inputbox";
-import { EmailAuthRequestDto, IdCheckRequestDto } from "src/apis/auth/dto/request";
-import { IdCheckRequest, emailAuthRequest } from "src/apis/auth";
+import { EmailAutCheckRequestDto, EmailAuthRequestDto, IdCheckRequestDto, SignInRequestDto, SignUpRequestDto } from "src/apis/auth/dto/request";
+import { IdCheckRequest, SignInRequest, SignUpRequest, emailAuthCheckRequest, emailAuthRequest } from "src/apis/auth";
 import ResponseDto from "src/apis/response.dto";
+import { resourceUsage } from "process";
+import { SignInResponseDto } from "src/apis/auth/dto/response";
+import { useCookies } from "react-cookie";
+import { useNavigate, useParams } from "react-router";
+import { LOCAL_ABSOLUTE_PATH } from "src/constant";
+
+export function Sns() {
+
+    const {accessToken, expires} = useParams();
+    const [cookies, setCookies] = useCookies();
+
+    const navigator = useNavigate();
+    
+    useEffect(() => {
+        if(!accessToken || !expires) return;
+        const expiration = new Date(Date.now() + (Number(expires) * 1000));
+        setCookies("accessToken", accessToken, {path: '/', expires: expiration});
+
+        navigator(LOCAL_ABSOLUTE_PATH);
+    }, [])
+
+    return <></>;
+}
 
 //                    type                    //
 type AuthPage = 'sign-in' | 'sign-up';
@@ -21,7 +44,7 @@ function SnsContainer({title}:SnsContainerProps) {
 
     //                    event handler                    //
     const onSnsButtonClickHandler = (type: 'kakao' | 'naver') => {
-        alert(type);
+        window.location.href = 'http://localhost:4000/api/v1/auth/oauth2/' + type;
 
     };
 //                    render                    //
@@ -47,10 +70,35 @@ interface Props {
 function SignIn({onLinkClickHandler}: Props) { 
 
     //                    state                    //
+    const [cookies, setCookies] = useCookies();
+
     const [id, setId] = useState<string>('');
     const [password, setPassword] = useState<string>('');
 
     const [message, setMessage] = useState<string>('');
+
+    //                    function                    //
+    const navigator = useNavigate();
+
+    const signInResponse = (result: SignInResponseDto | ResponseDto | null) => {
+        const message =
+            !result ? '서버에 문제가 있습니다.' :
+            result.code === 'VF' ? '아이디와 비밀번호를 모두 입력하세요.' :
+            result.code === 'SF' ? '로그인 정보가 일치하지 않습니다.' :
+            result.code === 'TF' ? '서버에 문제가 있습니다.' :
+            result.code === 'DBE' ? '서버에 문제가 있습니다.' : "";
+        
+        setMessage(message);
+
+        const isSuccess = result && result.code === 'SU';
+        if(!isSuccess) return;
+
+        const {accessToken, expires} = result as SignInResponseDto;
+        const expiration = new Date(Date.now() + (expires * 1000));
+        setCookies("accessToken", accessToken, {path: '/', expires: expiration});
+
+        navigator(LOCAL_ABSOLUTE_PATH);
+    };
         
     //                    event handler                    //
     const onIdChangeHandler = (event:ChangeEvent<HTMLInputElement>) => {
@@ -64,19 +112,17 @@ function SignIn({onLinkClickHandler}: Props) {
     };
 
     const onSignInButtonClickHandler = () => {
-        
-        const ID = 'service123';
-        const PASSWORD = 'qwer1234';
+        if(!id || !password) {
+            setMessage("아이디와 비밀번호를 모두 입력하세요.");
+            return;
+        }
 
-        const isSuccess = id === ID && password === PASSWORD;
-        if(isSuccess) {
-            setId('');
-            setPassword('');
-            alert('로그인 성공!');
+        const reqeustBody: SignInRequestDto = {
+            userId: id,
+            userPassword: password
         }
-        else {
-            setMessage('로그인 정보가 일치하지 않습니다.');
-        }
+        SignInRequest(reqeustBody).then(signInResponse);
+        
     };
 
 //                    render                    //
@@ -106,11 +152,11 @@ function SignUp({onLinkClickHandler}:Props) {
     const [password, setPassword] = useState<string>('');
     const [passwordCheck, setpasswordCheck] = useState<string>('');
     const [email, setEmail] = useState<string>('');
-    const [authnumber, setAuthNumber] = useState<string>('');
+    const [authNumber, setAuthNumber] = useState<string>('');
     
     const [idButtonStatus, setIdButtonStatus] = useState<boolean>(false);
     const [emailButtonStatus, setEamilButtonStatus] = useState<boolean>(false);
-    const [authnumberButtonStatus, setAuthNumberButtonStatus] = useState<boolean>(false);
+    const [authNumberButtonStatus, setAuthNumberButtonStatus] = useState<boolean>(false);
 
     const [isIdCheck, setIdCheck] = useState<boolean>(false);
     const [isPasswordPattern, setPasswordPattern] = useState<boolean>(false);
@@ -166,7 +212,39 @@ function SignUp({onLinkClickHandler}:Props) {
         setEmailMessage(emailMessage);
         setEmailCheck(emailCheck);
         setEmailError(emailError);
-    }
+    };
+
+    const emailAuthCheckResponse = (result: ResponseDto | null) => {
+        const authNumberMessage =
+            !result ? "서버에 문제가 있습니다. " :
+            result.code === 'VF' ? '인증번호를 입력해주세요.' :
+            result.code === 'AF' ? '인증번호가 일치하지 않습니다.' :
+            result.code === 'DBE' ? '서버에 문제가 있습니다.' :
+            result.code === 'SU' ? '인증번호가 확인되었습니다.' : "";
+        const authNumberCheck = result !== null && result.code === 'SU';
+        const authNumberError = !authNumberCheck;
+
+        setAuthNumberMessage(authNumberMessage);
+        setAuthNumberCheck(authNumberCheck);
+        setAuthNumberError(authNumberError);
+    };
+
+    const signUpResponse = (result: ResponseDto | null) => {
+        const message =
+            !result ? '서버에 문제가 있습니다.' :
+            result.code === 'VF' ? '입력 형식이 맞지 않습니다.' :
+            result.code === 'DI' ? '이미 사용중인 아이디입니다.' :
+            result.code === 'DE' ? '중복된 이메일입니다.' :
+            result.code === 'AF' ? '인증번호가 일치하지 않습니다.' :
+            result.code === 'DBE' ? '서버에 문제가 있습니다.' : "";
+
+        const isSuccess = result && result.code === 'SU';
+        if(result === null || result.code !== 'SU') {
+            alert(message);
+            return;
+        } 
+        onLinkClickHandler();
+    };
 
     //                        event handler                      //
     const onIdChangeHandler = (event: ChangeEvent<HTMLInputElement>) => {
@@ -255,19 +333,30 @@ function SignUp({onLinkClickHandler}:Props) {
     };
 
     const onAuthNumberButtonClickHandler = () => {
-        if(!authnumberButtonStatus) return;
-        
-        const authNumberCheck = authnumber === '1234';
-        setAuthNumberCheck(authNumberCheck);
-        setAuthNumberError(!authNumberCheck);
+        if(!authNumberButtonStatus) return;
+        if(!authNumber) return;
 
-        const authNumberMessage = authNumberCheck ? '인증번호가 확인되었습니다.' : '인증번호가 일치하지 않습니다.';
-        setAuthNumberMessage(authNumberMessage);
+        const requestBody: EmailAutCheckRequestDto = {
+            userEmail: email,
+            authNumber
+        };
+        emailAuthCheckRequest(requestBody).then(emailAuthCheckResponse);
     };
     
     const onSignUpButtonClickHandler = () => {
         if(!isSignUpActive) return;
-        alert('회원가입');
+        if(!id || !password || !passwordCheck || !email || !authNumber) {
+            alert('모든 내용을 입력해주세요.');
+            return;
+        }
+
+        const requestBody: SignUpRequestDto = {
+            userId: id,
+            userPassword: password,
+            userEmail: email,
+            authNumber
+        }
+        SignUpRequest(requestBody).then(signUpResponse);
     };
     
     //                    render                    //
@@ -293,10 +382,10 @@ function SignUp({onLinkClickHandler}:Props) {
 
                 {
                 isEmailCheck &&
-                <InputBox label="인증번호" type="text" value={authnumber} 
+                <InputBox label="인증번호" type="text" value={authNumber} 
                 placeholder="인증번호 4자리를  입력해주세요." 
                 onChangeHandler={onAuthNumberChangeHandler} buttonTitle="인증 확인" 
-                ButtonStatus={authnumberButtonStatus} onButtonClickHandler={onAuthNumberButtonClickHandler} message={authNumberMessage} error={isAuthNumberError} />}
+                ButtonStatus={authNumberButtonStatus} onButtonClickHandler={onAuthNumberButtonClickHandler} message={authNumberMessage} error={isAuthNumberError} />}
 
             </div>
             <div className="authentication-button-container">
@@ -311,7 +400,7 @@ function SignUp({onLinkClickHandler}:Props) {
 export default function Authentication() {
 
     //                    state                    //
-    const [page, setPage] = useState<AuthPage>('sign-up');
+    const [page, setPage] = useState<AuthPage>('sign-in');
 
     //                    event handler                    //
     const onLinkClickHandler = () => {

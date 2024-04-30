@@ -20,7 +20,7 @@ function Index() {
   const [cookies] = useCookies();
 
   //                  function                         //
-const navigator = useNavigate();
+  const navigator = useNavigate();
 
   //                  effect                         //
   useEffect(() => {

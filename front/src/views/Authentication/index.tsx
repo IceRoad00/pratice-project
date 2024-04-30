@@ -7,7 +7,6 @@ import InputBox from "src/components/Inputbox";
 import { EmailAutCheckRequestDto, EmailAuthRequestDto, IdCheckRequestDto, SignInRequestDto, SignUpRequestDto } from "src/apis/auth/dto/request";
 import { IdCheckRequest, SignInRequest, SignUpRequest, emailAuthCheckRequest, emailAuthRequest } from "src/apis/auth";
 import ResponseDto from "src/apis/response.dto";
-import { resourceUsage } from "process";
 import { SignInResponseDto } from "src/apis/auth/dto/response";
 import { useCookies } from "react-cookie";
 import { useNavigate, useParams } from "react-router";

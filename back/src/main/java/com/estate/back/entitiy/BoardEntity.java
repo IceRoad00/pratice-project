@@ -1,5 +1,11 @@
 package com.estate.back.entitiy;
 
+import com.estate.back.dto.request.board.PostBoardRequestDto;
+
+import java.util.Date;
+import java.time.Instant;
+import java.text.SimpleDateFormat;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -20,7 +26,7 @@ import lombok.Setter;
 public class BoardEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String receptionNumber;
+    private Integer receptionNumber;
     private Boolean status;
     private String title;
     private String contents;
@@ -29,5 +35,16 @@ public class BoardEntity {
     private Integer viewCount;
     private String comment;
 
-    
+    public BoardEntity(PostBoardRequestDto dto, String userId) {
+        Date now = Date.from(Instant.now());
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String writeDatetime = simpleDateFormat.format(now);
+
+        this.status = false;
+        this.title = dto.getTitle();
+        this.contents = dto.getContents();
+        this.writerId = userId;
+        this.writeDatetime = writeDatetime;
+        this.viewCount = 0;
+    }
 }

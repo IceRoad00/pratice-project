@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-public class AuthCotroller {
+public class AuthController {
 
     private final AuthService authService;
     

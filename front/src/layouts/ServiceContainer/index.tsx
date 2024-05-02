@@ -6,7 +6,7 @@ import { useCookies } from 'react-cookie';
 import { getSignInUserRequest } from 'src/apis/user';
 import { GetSignInUserResponseDto } from 'src/apis/user/dto/response';
 import ResponseDto from 'src/apis/response.dto';
-import useUserStore from 'src/stores/user.store';
+import { useUserStore } from 'src/stores';
 
 type Path = '지역 평균' | '비율 계산' | 'Q&A 게시판' | '';
 
@@ -93,6 +93,8 @@ export default function ServiceContainer() {
     const [path, setPath] = useState<Path>('');
 
     //                function                //
+    const navigator = useNavigate();
+
     const getSignInUserResponse = (result: GetSignInUserResponseDto | ResponseDto | null) => {
 
         const message = 
@@ -123,6 +125,7 @@ export default function ServiceContainer() {
     useEffect(() => {
 
         if(!cookies.accessToken) {
+            navigator(AUTH_ABSOLUTE_PATH);
             return;
         }
 

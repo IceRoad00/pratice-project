@@ -8,6 +8,7 @@ import java.util.List;
 import com.estate.back.dto.request.board.PostBoardRequestDto;
 import com.estate.back.dto.response.ResponseDto;
 import com.estate.back.dto.response.board.GetBoardListResponseDto;
+import com.estate.back.dto.response.board.GetSearchBoardListResponseDto;
 import com.estate.back.entitiy.BoardEntity;
 import com.estate.back.repository.BoardRepository;
 import com.estate.back.repository.UserRepository;
@@ -56,6 +57,26 @@ public class BoardServiceImplementaion implements BoardService{
             return ResponseDto.databaseError();
         }
 
+    }
+
+    @Override
+    public ResponseEntity<? super GetSearchBoardListResponseDto> getSearchBoardList(String searchWord) {
+        
+        try {
+
+            // SELECT*from board WHERE title LIKE '%searchWord%' ORDER BY reception_number DESC;
+            // findByTitleContainsOrderByReceptionNumberDesc();
+            // Contains / Containing / IsContaining = LIKE '%word%'
+            // StartingWith = LIKE 'word%'
+            // EndingWith = LIKE '%word'
+
+            List<BoardEntity> boardEntities = boardRepository.findByTitleContainsOrderByReceptionNumberDesc(searchWord);            
+            return GetSearchBoardListResponseDto.success(boardEntities);
+
+        } catch(Exception exception) {
+            exception.printStackTrace();
+            return ResponseDto.databaseError();
+        }
     }
 
     

@@ -13,5 +13,6 @@ public interface BoardRepository extends JpaRepository<BoardEntity, Integer>{
 
 
     List<BoardEntity> findByOrderByReceptionNumberDesc();
+    List<BoardEntity> findByTitleContainsOrderByReceptionNumberDesc(String title);
 
 }

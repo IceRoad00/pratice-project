@@ -6,8 +6,10 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 import com.estate.back.dto.request.board.PostBoardRequestDto;
+import com.estate.back.dto.request.board.PostCommentRequestDto;
 import com.estate.back.dto.response.ResponseDto;
 import com.estate.back.dto.response.board.GetBoardListResponseDto;
+import com.estate.back.dto.response.board.GetBoardResponseDto;
 import com.estate.back.dto.response.board.GetSearchBoardListResponseDto;
 import com.estate.back.entitiy.BoardEntity;
 import com.estate.back.repository.BoardRepository;
@@ -27,18 +29,42 @@ public class BoardServiceImplementaion implements BoardService{
     public ResponseEntity<ResponseDto> postBoard(PostBoardRequestDto dto, String userId) {
 
         try {
-
+            
             boolean isExistUser = userRepository.existsByUserId(userId);
             if(!isExistUser) return ResponseDto.authenticationFailed();
-
+            
             BoardEntity boardEntity = new BoardEntity(dto, userId);
             boardRepository.save(boardEntity);
             
+            
+        } catch(Exception exception) {
+            exception.printStackTrace();
+            return ResponseDto.databaseError();
+        }
+        return ResponseDto.success();
+    }
+    
+    @Override
+    public ResponseEntity<ResponseDto> postComment(PostCommentRequestDto dto, int receptionNumber) {
+        
+        try {
+
+            BoardEntity boardEntity = boardRepository.findByReceptionNumber(receptionNumber);
+            if(boardEntity == null) return ResponseDto.noExistBoard();
+            boolean status = boardEntity.getStatus();
+            if(status) return ResponseDto.writtenComment();
+
+            String comment = dto.getComment();
+            boardEntity.setStatus(true);
+            boardEntity.setComment(comment);
+
+            boardRepository.save(boardEntity);
 
         } catch(Exception exception) {
             exception.printStackTrace();
             return ResponseDto.databaseError();
         }
+
         return ResponseDto.success();
     }
 
@@ -70,7 +96,8 @@ public class BoardServiceImplementaion implements BoardService{
             // StartingWith = LIKE 'word%'
             // EndingWith = LIKE '%word'
 
-            List<BoardEntity> boardEntities = boardRepository.findByTitleContainsOrderByReceptionNumberDesc(searchWord);            
+            List<BoardEntity> boardEntities = boardRepository.findByTitleContainsOrderByReceptionNumberDesc(searchWord);  
+            
             return GetSearchBoardListResponseDto.success(boardEntities);
 
         } catch(Exception exception) {
@@ -78,6 +105,51 @@ public class BoardServiceImplementaion implements BoardService{
             return ResponseDto.databaseError();
         }
     }
+
+    @Override
+    public ResponseEntity<? super GetBoardResponseDto> getBoard(int receptionNumber) {
+
+        try {
+
+            // - 데이터베이스의 Board테이블에서 receptionNumber에 해당하는 레코드 조회
+            // SELECT * FROM board WHERE reception_number = :receptionNumber;
+
+            BoardEntity boardEntity = boardRepository.findByReceptionNumber(receptionNumber);
+
+            // 데이터 유효성 검사 / 존재하지 않으면 noExistBoard 반환
+            if(boardEntity == null) return ResponseDto.noExistBoard();
+
+            return GetBoardResponseDto.success(boardEntity);
+
+        } catch(Exception exception) {
+            exception.printStackTrace();
+            return ResponseDto.databaseError();
+        }
+    }
+
+    @Override
+    public ResponseEntity<ResponseDto> increaseViewCount(int receptionNumber) {
+
+        try {
+
+            BoardEntity boardEntity = boardRepository.findByReceptionNumber(receptionNumber);
+
+            // 데이터 유효성 검사 / 존재하지 않으면 noExistBoard 반환
+            if(boardEntity == null) return ResponseDto.noExistBoard();
+            
+            // 존재하면 조회수 1 증가시키고 boardEntity를 save 처리 (데이터베이스에 저장)
+            boardEntity.increaseViewCount();
+            boardRepository.save(boardEntity);
+            
+        } catch(Exception exception) {
+            exception.printStackTrace();
+            return ResponseDto.databaseError();
+        }
+
+        return ResponseDto.success();
+    }
+
+
 
     
 }

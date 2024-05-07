@@ -1,5 +1,6 @@
 package com.estate.back.common.object;
 
+import com.estate.back.common.util.ChangeDateFormatUtil;
 import com.estate.back.entitiy.BoardEntity;
 
 import lombok.Getter;
@@ -20,13 +21,8 @@ public class BoardListItem {
     private Integer viewCount;
 
     private BoardListItem(BoardEntity boardEntity) throws Exception {
-        // 문자열을 Datetime으로 바꿔주고
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date datetime = simpleDateFormat.parse(boardEntity.getWriteDatetime());
-        // yy.mm.dd 형태로 바꿔줌
-        simpleDateFormat = new SimpleDateFormat("yy.MM.dd");
         // 객체를 writeDatetime으로 전달해줌
-        String writeDatetime = simpleDateFormat.format(datetime);
+        String writeDatetime = ChangeDateFormatUtil.changeYYMMDD(boardEntity.getWriteDatetime());
 
         // boardEntity에서 writeId 가져옴
         String writerId = boardEntity.getWriterId();
